@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demos.dao.LoginHisDao">
+
+    <select id="searchSysname" resultType="String" >
+     select date_format(create_time,'%m-%d') times from t_website_visit where date_format(create_time,'%m-%d')>'03-17' group by date_format(create_time,'%m-%d') order by times desc
+--      select web_id from t_website_visit where 1=1 group by web_id
+    </select>
+
+
+    <select id="Accesssystem" resultType="java.util.HashMap" parameterType="String">
+        select count(1) num,web_id sysname from t_website_visit where date_format(create_time,'%m-%d') in
+        <foreach collection="webid" item="item"  open="(" separator="," close=")">
+        #{item,jdbcType=VARCHAR}
+        </foreach>
+        group by web_id order by num
+
+
+        <!--select sum(a.num) num,a.web_id sysname,a.hospitTime hospitTime from(-->
+        <!--select count(*) num,date_format(create_time,'%m-%d') as hospitTime ,web_id from t_website_visit where date_format(create_time,'%m-%d')-->
+        <!--in-->
+        <!--<foreach collection="webid" item="item"  open="(" separator="," close=")">-->
+            <!--#{item,jdbcType=VARCHAR}-->
+        <!--</foreach>-->
+        <!--group by create_time,web_id)a-->
+        <!--group by web_id,a.hospitTime-->
+
+        <!--select a.hospitTime as hospitTime,web_id as sysname,-->
+            <!--<foreach collection="webid" item="item" separator="," >-->
+                <!--sum( case when a.web_id = #{item,jdbcType=VARCHAR} then a.num else 0 end )as num-->
+            <!--</foreach>-->
+            <!--from (-->
+                <!--select date_format(create_time,'%m-%d') AS hospitTime ,count(1) num,web_id from t_website_visit-->
+            <!--group by create_time )a group by a.hospitTime-->
+    </select>
+
+
+    <!--and create_time>sysdate-1/24/60-->
+    <!--<if test="type=2 and type!=null and type!=''">-->
+    <!--and CREATE_TIME > sysdate-12/1440-->
+    <!--</if>-->
+    <!--<if test="type=3 and type!=null and type!=''">-->
+    <!--and create_tIME  &gt; (sysdate - to_dsinterval('0 1:00:00'))-->
+    <!--and create_tIME  &lt; sysdate-->
+    <!--</if>-->
+    <!--<if test="beginTime!=null and  beginTime!='' or endTime!=null and endTime!=''">-->
+    <!--and t.CREATE_TIME &gt;to_date(#{beginTime}, 'YYYY-MM-DD') and t.CREATE_TIME &lt;to_date(#{endTime}, 'YYYY-MM-DD')-->
+    <!--</if>-->
+
+
+    <select id="totalSsoCount" resultType="Integer" parameterType="Integer">
+               select count(1) from T_SSO_LOGIN_LOG where 1=1
+               and create_time>sysdate-1/24/60
+               <if test="type=2 and type!=null and type!=''">
+                   and CREATE_TIME > sysdate-12/1440
+               </if>
+               <if test="type=3 and type!=null and type!=''">
+                   and create_tIME  &gt; (sysdate - to_dsinterval('0 1:00:00'))
+                   and create_tIME  &lt; sysdate
+               </if>
+    </select>
+
+    <select id="searchEeid" resultType="java.util.HashMap" parameterType="Integer">
+        select * from (select user_id ud, count(id) cnt from t_login_his where 1=1
+        and create_time>sysdate-1/24/60
+        <if test="type=2 and type!=null and type!=''">
+            and CREATE_TIME > sysdate-12/1440
+        </if>
+        <if test="type=3 and type!=null and type!=''">
+            and create_tIME  &gt; (sysdate - to_dsinterval('0 1:00:00'))
+            and create_tIME  &lt; sysdate
+        </if>
+        group by user_id
+        )
+        where rownum&lt;11 order by cnt desc
+    </select>
+
+    <select id="countsPv" resultType="Integer" parameterType="Integer">
+        select count(1) cn from T_SSO_LOGIN_LOG where 1=1
+        <if test="type=2 and type!=null and type!=''">
+            and CREATE_TIME > sysdate-12/1440
+        </if>
+        <if test="type=3 and type!=null and type!=''">
+            and create_tIME  &gt; (sysdate - to_dsinterval('0 1:00:00'))
+            and create_tIME  &lt; sysdate
+        </if>
+    </select>
+
+    <!--<select id="showUserLists" resultType="java.util.HashMap" parameterType="Integer">-->
+        <!--select * from (select s.system_name sn,count(s.system_name)num ,to_char(s.CREATE_TIME , 'YYYY-MM-DD')tm from T_WEBSITE_VISIT t,T_SSO_ACCOUNT s  where t.web_id = s.id-->
+        <!--<if test="type=1 and type!=null and type!=''">-->
+            <!--and s.CREATE_TIME > sysdate-7-->
+        <!--</if>-->
+        <!--<if test="type=2 and type!=null and type!=''">-->
+            <!--and s.CREATE_TIME > sysdate-30-->
+        <!--</if>-->
+        <!--<if test="beginTime!=null and  beginTime!='' or endTime!=null and endTime!=''">-->
+            <!--and s.CREATE_TIME &gt;to_date(#{beginTime}, 'YYYY-MM-DD') and s.CREATE_TIME &lt;to_date(#{endTime}, 'YYYY-MM-DD')-->
+        <!--</if>-->
+        <!--group by s.system_name,s.CREATE_TIME)-->
+        <!--order by tm desc-->
+    <!--</select>-->
+
+    <select id="showUserLists" resultType="java.util.HashMap" parameterType="Integer">
+        select * from (select s.system_name sn,count(s.system_name)num  from T_WEBSITE_VISIT t,T_SSO_ACCOUNT s  where t.web_id = s.id
+        and  s.CREATE_TIME>sysdate-1/24/60
+        <if test="type=2 and type!=null and type!=''">
+            and s.CREATE_TIME > sysdate-12/1440
+        </if>
+        <if test="type=3 and type!=null and type!=''">
+            and s.CREATE_TIME  &gt; (sysdate - to_dsinterval('0 1:00:00'))
+            and s.CREATE_TIME  &lt; sysdate
+        </if>
+        group by s.system_name,s.CREATE_TIME)
+        where rownum&lt;6
+        order by num desc
+    </select>
+
+
+    <select id="showUserTop" resultType="java.util.HashMap" parameterType="Integer">
+        select * from (select s.system_name,count(s.system_name)num ,to_char(s.CREATE_TIME , 'YYYY-MM-DD')tm from T_WEBSITE_VISIT t,T_SSO_ACCOUNT s  where t.web_id = s.id
+        <if test="_parameter ='1'and _parameter !=null and _parameter !=''">
+            and s.CREATE_TIME > sysdate-7
+        </if>
+        <if test="_parameter ='2' and _parameter !=null and _parameter !=''">
+            and s.CREATE_TIME > sysdate-30
+        </if>
+        group by s.system_name,s.CREATE_TIME)
+            where rownum&lt;6
+        order by tm asc
+    </select>
+
+    <select id="searchSsoDayCount" resultType="java.util.HashMap" parameterType="Integer">
+        SELECT to_char(t.create_time, 'YYYY-MM-DD')ct,count(id)cnt  FROM T_SSO_LOGIN_LOG t where 1=1
+        <if test="type=1 and type!=null and type!=''">
+            and t.CREATE_TIME > sysdate-7
+        </if>
+        <if test="type=2 and type!=null and type!=''">
+            and t.CREATE_TIME > sysdate-30
+        </if>
+        <if test="beginTime!=null and  beginTime!='' or endTime!=null and endTime!=''">
+            and t.CREATE_TIME &gt;to_date(#{beginTime}, 'YYYY-MM-DD') and t.CREATE_TIME &lt;to_date(#{endTime}, 'YYYY-MM-DD')
+        </if>
+        group by to_char(t.create_time, 'YYYY-MM-DD')
+        order by to_char(t.create_time, 'YYYY-MM-DD')
+    </select>
+
+
+    <select id="searchHistoryDay" resultType="java.util.HashMap" parameterType="Integer">
+     select to_char(login_time,'YYYY-MM-DD')createtime,count(id)historycount
+     from t_login_his where 1=1
+        <if test="beginTime!=null and  beginTime!='' or endTime!=null and endTime!=''">
+            and CREATE_TIME &gt;to_date(#{beginTime}, 'YYYY-MM-DD') and CREATE_TIME &lt;to_date(#{endTime}, 'YYYY-MM-DD')
+        </if>
+        <if test="userid!=null and userid!=''">
+            and user_id=#{userid}
+        </if>
+       group by to_char(login_time,'YYYY-MM-DD') order by to_char(login_time,'YYYY-MM-DD')
+    </select>
+
+
+</mapper>
